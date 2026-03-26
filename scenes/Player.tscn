@@ -2,6 +2,24 @@
 
 [ext_resource type="Texture2D" uid="uid://btar2o3qpn4ag" path="res://assets/Factions/Knights/Troops/Units/Blue Units/Warrior/Warrior_Idle.png" id="1_p0vlq"]
 [ext_resource type="Script" uid="uid://usxlunns6v1j" path="res://scripts/Player.cs" id="1_v6fml"]
+[ext_resource type="Texture2D" uid="uid://cm4mb4k1nxjt4" path="res://assets/Factions/Knights/Troops/Units/Blue Units/Warrior/Warrior_Attack2.png" id="2_mdl7e"]
+[ext_resource type="Texture2D" uid="uid://dix8mj5g6wixb" path="res://assets/Factions/Knights/Troops/Units/Blue Units/Warrior/Warrior_Run.png" id="3_3li8b"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_srp4u"]
+atlas = ExtResource("2_mdl7e")
+region = Rect2(0, 0, 192, 191)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_jfpux"]
+atlas = ExtResource("2_mdl7e")
+region = Rect2(192, 0, 192, 191)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_61ith"]
+atlas = ExtResource("2_mdl7e")
+region = Rect2(384, 0, 192, 191)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ebwui"]
+atlas = ExtResource("2_mdl7e")
+region = Rect2(576, 0, 192, 191)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_v6fml"]
 atlas = ExtResource("1_p0vlq")
@@ -35,8 +53,49 @@ region = Rect2(1152, 0, 192, 192)
 atlas = ExtResource("1_p0vlq")
 region = Rect2(1344, 0, 192, 192)
 
+[sub_resource type="AtlasTexture" id="AtlasTexture_6eyey"]
+atlas = ExtResource("3_3li8b")
+region = Rect2(0, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_d3wef"]
+atlas = ExtResource("3_3li8b")
+region = Rect2(192, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_o4126"]
+atlas = ExtResource("3_3li8b")
+region = Rect2(384, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_lkdrv"]
+atlas = ExtResource("3_3li8b")
+region = Rect2(576, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_p7iby"]
+atlas = ExtResource("3_3li8b")
+region = Rect2(768, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_0rnld"]
+atlas = ExtResource("3_3li8b")
+region = Rect2(960, 0, 192, 192)
+
 [sub_resource type="SpriteFrames" id="SpriteFrames_6eyey"]
 animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_srp4u")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_jfpux")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_61ith")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ebwui")
+}],
+"loop": false,
+"name": &"attack",
+"speed": 10.0
+}, {
 "frames": [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_v6fml")
@@ -63,7 +122,30 @@ animations = [{
 "texture": SubResource("AtlasTexture_bruh7")
 }],
 "loop": true,
-"name": &"default",
+"name": &"idle",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_6eyey")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_d3wef")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_o4126")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_lkdrv")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_p7iby")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_0rnld")
+}],
+"loop": true,
+"name": &"run",
 "speed": 10.0
 }]
 
@@ -75,8 +157,8 @@ script = ExtResource("1_v6fml")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=443227772]
 sprite_frames = SubResource("SpriteFrames_6eyey")
-autoplay = "default"
-frame_progress = 0.91060126
+animation = &"attack"
+autoplay = "idle"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1491397630]
 position = Vector2(-1, 3)
