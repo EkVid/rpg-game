@@ -1,25 +1,27 @@
 using Godot;
 using System;
+using tinySwords.scripts;
 
-public partial class Player : CharacterBody2D
+public partial class Player : Character
 {
-	private const float Speed = 300.0f;
-	private Vector2 direction;
-	private AnimatedSprite2D character;
-	private float x;
-	private float y;
-	private bool isAttacking = false;
+	private Vector2 _direction;
+	private float _x;
+	private float _y;
+	private bool _isAttacking = false;
+	private Node2D _hitbox;
+	private Area2D _hitboxArea;
 
 	public override void _Ready()
 	{
 		base._Ready();
-		character = GetNode<AnimatedSprite2D>("AnimatedSprite2D");
+		_hitbox = GetNode<Node2D>("div");
+		_hitboxArea = _hitbox.GetNode<Area2D>("HitBox");
 		
-		character.AnimationFinished += () =>
+		_character.AnimationFinished += () =>
 		{
-			if (character.Animation == "attack")
+			if (_character.Animation == "attack")
 			{
-				isAttacking = false;
+				_isAttacking = false;
 			}
 		};
 	}
@@ -35,14 +37,14 @@ public partial class Player : CharacterBody2D
 
 	private void HandleMovement()
 	{
-		x = Input.GetActionStrength("move_right") - Input.GetActionStrength("move_left");
-		y = Input.GetActionStrength("move_down") - Input.GetActionStrength("move_up");
+		_x = Input.GetActionStrength("move_right") - Input.GetActionStrength("move_left");
+		_y = Input.GetActionStrength("move_down") - Input.GetActionStrength("move_up");
 		
-		direction = new Vector2(x,y);
+		_direction = new Vector2(_x,_y);
 
-		if (direction != Vector2.Zero)
+		if (_direction != Vector2.Zero)
 		{
-			Velocity = direction.Normalized() * Speed;
+			Velocity = _direction.Normalized() * Speed;
 		}
 		else
 		{
@@ -52,30 +54,40 @@ public partial class Player : CharacterBody2D
 
 	private void HandleFlip()
 	{
-		if(x != 0) 
-			character.FlipH = x < 0;
+		if (_x != 0)
+		{
+			_hitbox.Scale = new Vector2(_x * Mathf.Abs(_hitbox.Scale.X), _hitbox.Scale.Y);
+			_character.FlipH = _x < 0;
+		}
 	}
 
 	private void HandleAttack()
 	{
-		if (Input.IsActionJustPressed("attack") &&  !isAttacking)
+		if (Input.IsActionJustPressed("attack") &&  !_isAttacking)
 		{
-			isAttacking = true;
+			_isAttacking = true;
 			PlayAnimation("attack");
+			foreach (var node in _hitboxArea.GetOverlappingBodies())
+			{
+				if (node != this && node is Character enemyCharacter)
+				{
+					enemyCharacter.TakeDamage(AttackPower);
+				}
+			}
 		}
 	}
 
 	private void UpdateAnimation()
 	{
-		if (isAttacking)
+		if (_isAttacking)
 			return;
-		string anima = direction != Vector2.Zero ? "run" : "idle";
+		string anima = _direction != Vector2.Zero ? "run" : "idle";
 		PlayAnimation(anima);
 	}
 
 	private void PlayAnimation(String animation)
 	{
-		if(character.Animation != animation) 
-			character.Play(animation);
+		if(_character.Animation != animation) 
+			_character.Play(animation);
 	}
 }
