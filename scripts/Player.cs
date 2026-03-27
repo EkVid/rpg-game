@@ -1,5 +1,7 @@
 using Godot;
 using System;
+using System.Threading.Tasks;
+using GodotTask;
 using tinySwords.scripts;
 
 public partial class Player : Character
@@ -17,9 +19,9 @@ public partial class Player : Character
 		_hitbox = GetNode<Node2D>("div");
 		_hitboxArea = _hitbox.GetNode<Area2D>("HitBox");
 		
-		_character.AnimationFinished += () =>
+		AnimationSprite.AnimationFinished += () =>
 		{
-			if (_character.Animation == "attack")
+			if (AnimationSprite.Animation == "attack")
 			{
 				_isAttacking = false;
 			}
@@ -28,7 +30,7 @@ public partial class Player : Character
 
 	public override void _PhysicsProcess(double delta)
 	{
-		HandleAttack();
+		HandleAttack().Forget();
 		HandleMovement();
 		HandleFlip();
 		UpdateAnimation();
@@ -57,22 +59,22 @@ public partial class Player : Character
 		if (_x != 0)
 		{
 			_hitbox.Scale = new Vector2(_x * Mathf.Abs(_hitbox.Scale.X), _hitbox.Scale.Y);
-			_character.FlipH = _x < 0;
+			AnimationSprite.FlipH = _x < 0;
 		}
 	}
 
-	private void HandleAttack()
+	private async GDTask HandleAttack()
 	{
 		if (Input.IsActionJustPressed("attack") &&  !_isAttacking)
 		{
 			_isAttacking = true;
 			PlayAnimation("attack");
+			await GDTask.Delay(TimeSpan.FromSeconds(AttackDelay), DelayType.Realtime);
+			await GDTask.WaitForPhysicsProcess();
 			foreach (var node in _hitboxArea.GetOverlappingBodies())
 			{
 				if (node != this && node is Character enemyCharacter)
-				{
 					enemyCharacter.TakeDamage(AttackPower);
-				}
 			}
 		}
 	}
@@ -87,7 +89,7 @@ public partial class Player : Character
 
 	private void PlayAnimation(String animation)
 	{
-		if(_character.Animation != animation) 
-			_character.Play(animation);
+		if(AnimationSprite.Animation != animation) 
+			AnimationSprite.Play(animation);
 	}
 }
