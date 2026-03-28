@@ -4,28 +4,36 @@ using System.Threading.Tasks;
 using GodotTask;
 using tinySwords.scripts;
 
-public partial class Player : Character
+public partial class Player : CharacterBody2D, IDamagable
 {
+	private float _speed = 300f;
+	private AnimatedSprite2D _animationSprite;
+	private float _attackPower = 50f;
+	private float _attackDelay = 0.5f;
 	private Vector2 _direction;
 	private float _x;
 	private float _y;
 	private bool _isAttacking = false;
 	private Node2D _hitbox;
 	private Area2D _hitboxArea;
-
+	private readonly Health _health = new Health();
+	
 	public override void _Ready()
 	{
 		base._Ready();
 		_hitbox = GetNode<Node2D>("div");
 		_hitboxArea = _hitbox.GetNode<Area2D>("HitBox");
+		_animationSprite = GetNode<AnimatedSprite2D>("AnimatedSprite2D");
 		
-		AnimationSprite.AnimationFinished += () =>
+		_animationSprite.AnimationFinished += () =>
 		{
-			if (AnimationSprite.Animation == "attack")
+			if (_animationSprite.Animation == "attack")
 			{
 				_isAttacking = false;
 			}
 		};
+
+		_health.OnDeath += QueueFree;
 	}
 
 	public override void _PhysicsProcess(double delta)
@@ -46,7 +54,7 @@ public partial class Player : Character
 
 		if (_direction != Vector2.Zero)
 		{
-			Velocity = _direction.Normalized() * Speed;
+			Velocity = _direction.Normalized() * _speed;
 		}
 		else
 		{
@@ -59,7 +67,7 @@ public partial class Player : Character
 		if (_x != 0)
 		{
 			_hitbox.Scale = new Vector2(_x * Mathf.Abs(_hitbox.Scale.X), _hitbox.Scale.Y);
-			AnimationSprite.FlipH = _x < 0;
+			_animationSprite.FlipH = _x < 0;
 		}
 	}
 
@@ -69,12 +77,12 @@ public partial class Player : Character
 		{
 			_isAttacking = true;
 			PlayAnimation("attack");
-			await GDTask.Delay(TimeSpan.FromSeconds(AttackDelay), DelayType.Realtime);
+			await GDTask.Delay(TimeSpan.FromSeconds(_attackDelay), DelayType.Realtime);
 			await GDTask.WaitForPhysicsProcess();
 			foreach (var node in _hitboxArea.GetOverlappingBodies())
 			{
-				if (node != this && node is Character enemyCharacter)
-					enemyCharacter.TakeDamage(AttackPower);
+				if (node != this && node is IDamagable enemyCharacter)
+					enemyCharacter.TakeDamage(_attackPower);
 			}
 		}
 	}
@@ -89,7 +97,12 @@ public partial class Player : Character
 
 	private void PlayAnimation(String animation)
 	{
-		if(AnimationSprite.Animation != animation) 
-			AnimationSprite.Play(animation);
+		if(_animationSprite.Animation != animation) 
+			_animationSprite.Play(animation);
+	}
+
+	public void TakeDamage(float damage)
+	{
+		_health.TakeDamage(damage);
 	}
 }

@@ -183,6 +183,7 @@ radius = 25.019993
 sprite_frames = SubResource("SpriteFrames_x6gvk")
 animation = &"idle"
 autoplay = "idle"
+frame_progress = 0.3282481
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=955229193]
 position = Vector2(1, 9)
