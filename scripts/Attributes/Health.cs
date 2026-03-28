@@ -5,7 +5,7 @@ namespace tinySwords.scripts;
 
 public class Health
 {
-    protected float Hitpoints{ get; set; } = 100f;
+    public float Hitpoints{ get; set; } = 100f;
     public event Action OnDeath;
     
     public void TakeDamage(float damage)

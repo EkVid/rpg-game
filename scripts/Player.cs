@@ -3,8 +3,9 @@ using System;
 using System.Threading.Tasks;
 using GodotTask;
 using tinySwords.scripts;
+using Animation = Godot.Animation;
 
-public partial class Player : CharacterBody2D, IDamagable
+public partial class Player : CharacterBody2D, IDamagable, IPlayAnimation
 {
 	private float _speed = 300f;
 	private AnimatedSprite2D _animationSprite;
@@ -17,10 +18,12 @@ public partial class Player : CharacterBody2D, IDamagable
 	private Node2D _hitbox;
 	private Area2D _hitboxArea;
 	private readonly Health _health = new Health();
-	
+	private Animations _animation = new Animations();
+
 	public override void _Ready()
 	{
 		base._Ready();
+		_health.Hitpoints = 300f;
 		_hitbox = GetNode<Node2D>("div");
 		_hitboxArea = _hitbox.GetNode<Area2D>("HitBox");
 		_animationSprite = GetNode<AnimatedSprite2D>("AnimatedSprite2D");
@@ -41,7 +44,7 @@ public partial class Player : CharacterBody2D, IDamagable
 		HandleAttack().Forget();
 		HandleMovement();
 		HandleFlip();
-		UpdateAnimation();
+		UpdateAnimation(_direction, _animationSprite, _isAttacking);
 		MoveAndSlide();
 	}
 
@@ -76,7 +79,7 @@ public partial class Player : CharacterBody2D, IDamagable
 		if (Input.IsActionJustPressed("attack") &&  !_isAttacking)
 		{
 			_isAttacking = true;
-			PlayAnimation("attack");
+			PlayAnimation("attack", _animationSprite);
 			await GDTask.Delay(TimeSpan.FromSeconds(_attackDelay), DelayType.Realtime);
 			await GDTask.WaitForPhysicsProcess();
 			foreach (var node in _hitboxArea.GetOverlappingBodies())
@@ -87,22 +90,18 @@ public partial class Player : CharacterBody2D, IDamagable
 		}
 	}
 
-	private void UpdateAnimation()
-	{
-		if (_isAttacking)
-			return;
-		string anima = _direction != Vector2.Zero ? "run" : "idle";
-		PlayAnimation(anima);
-	}
-
-	private void PlayAnimation(String animation)
-	{
-		if(_animationSprite.Animation != animation) 
-			_animationSprite.Play(animation);
-	}
-
 	public void TakeDamage(float damage)
 	{
 		_health.TakeDamage(damage);
+	}
+
+	public void UpdateAnimation(Vector2 direction, AnimatedSprite2D sprite, bool isAttacking)
+	{
+		_animation.UpdateAnimation(direction, sprite, _isAttacking);
+	}
+
+	public void PlayAnimation(string animation, AnimatedSprite2D sprite)
+	{
+		_animation.PlayAnimation(animation, sprite);
 	}
 }

@@ -979,6 +979,7 @@ tile_map_data = PackedByteArray("AAD5/wAAAAAAAAAAAAD0/wkAAAAAAAAAAAAVAAAAAAAAAAA
 tile_set = SubResource("TileSet_x7pel")
 
 [node name="Player" parent="." unique_id=1590857193 instance=ExtResource("10_algoc")]
+unique_name_in_owner = true
 z_index = 8
 z_as_relative = false
 y_sort_enabled = true
@@ -990,5 +991,8 @@ position = Vector2(2, 4)
 [node name="Monk" parent="." unique_id=37019793 instance=ExtResource("16_houy7")]
 position = Vector2(173, 335)
 
-[node name="CharacterBody2D" parent="." unique_id=1765082528 instance=ExtResource("17_lh1aq")]
-position = Vector2(315, 125)
+[node name="Enemy1" parent="." unique_id=1765082528 instance=ExtResource("17_lh1aq")]
+position = Vector2(316, 123)
+
+[node name="Enemy2" parent="." unique_id=1424930550 instance=ExtResource("17_lh1aq")]
+position = Vector2(-122, 117)
