@@ -82,6 +82,8 @@ public partial class Warrior : CharacterBody2D, IDamagable, IPlayAnimation
             {
                 _direction = Vector2.Zero;
                 Velocity = Vector2.Zero;   
+                // hard reload
+                PlayAnimation("idle", _animationSprite);
             }
         }
         
