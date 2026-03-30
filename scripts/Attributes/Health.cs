@@ -16,6 +16,11 @@ public class Health
             OnDeath?.Invoke();
         }
     }
+
+    public void Reset(float hitpoints)
+    {
+        Hitpoints = hitpoints;
+    }
     
 
 }

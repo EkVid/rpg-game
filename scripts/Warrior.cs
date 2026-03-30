@@ -1,20 +1,24 @@
 using Godot;
 using System;
+using GodotTask;
 using tinySwords.scripts;
 
-public partial class Warrior : CharacterBody2D, IDamagable, IPlayAnimation
+public partial class Warrior : CharacterBody2D, IDamagable
 {
     private readonly Health _health = new Health();
-    private readonly Animations _animations = new Animations();
     
     private AnimatedSprite2D _animationSprite;
+    private CollisionShape2D _collisionShape2D;
     private Area2D _chaseBox;
+    private Node2D _hitbox;
+    private Area2D _hitboxArea;
     
     private float _speed = 100f;
     
     private float _attackPower = 50f;
     private float _attackDelay = 0.5f;
-    private float _jitterPrevention = 0.5f;
+    private float _jitterPrevention = 2f;
+    private float _attackDistance = 60f;
     
     private bool _isAttacking = false;
     private bool _playerInRange = false;
@@ -29,12 +33,20 @@ public partial class Warrior : CharacterBody2D, IDamagable, IPlayAnimation
         _player = GetNode<Player>("%Player");
         _animationSprite = GetNode<AnimatedSprite2D>("AnimatedSprite2D");
         _chaseBox = GetNode<Area2D>("ChaseBox");
+        _collisionShape2D = GetNode<CollisionShape2D>("CollisionShape2D");
+        _hitbox = GetNode<Node2D>("div");
+        _hitboxArea = _hitbox.GetNode<Area2D>("HitBox");
         _spawnPoint = GlobalPosition;
         
         _animationSprite.AnimationFinished += () =>
         {
-            if (_animationSprite.Animation == "attack")
+            if(_animationSprite.Animation == "attack")
             {
+                foreach (var node in _hitboxArea.GetOverlappingBodies())
+                {
+                    if (node != this && node is IDamagable enemy)
+                        enemy.TakeDamage(_attackPower);
+                }
                 _isAttacking = false;
             }
         };
@@ -54,56 +66,88 @@ public partial class Warrior : CharacterBody2D, IDamagable, IPlayAnimation
         _health.OnDeath += async () =>
         {
             _isDead = true;
+            _collisionShape2D.Disabled = true;
             PlayAnimation("dead", _animationSprite);
             await ToSignal(_animationSprite, AnimatedSprite2D.SignalName.AnimationFinished);
-            GD.Print("DEAD");
             QueueFree();
         };
     }
     public override void _PhysicsProcess(double delta)
     {
         base._PhysicsProcess(delta);
+        float distanceToPlayer = (_player.GlobalPosition - GlobalPosition).Length();
+        float distanceToSpawn = (GlobalPosition - _spawnPoint).Length();
 
-        if (_isDead) return;
+        if (_isDead)
+        {
+            _isAttacking = false;
+            return;
+        }
         
         if (_playerInRange && _player != null)
         {
             _direction = (_player.GlobalPosition - GlobalPosition).Normalized();
-            Velocity = _direction * _speed;
-        }
-        else
-        {
-            if ((GlobalPosition - _spawnPoint).Length() > _jitterPrevention)
+
+            if (distanceToPlayer <= _attackDistance)
             {
-                _direction = (_spawnPoint - GlobalPosition).Normalized();
-                Velocity = _direction * _speed;
+                Velocity = Vector2.Zero;
+                if (!_isAttacking)
+                {
+                   HandleAttack().Forget();
+                }
             }
             else
             {
-                _direction = Vector2.Zero;
-                Velocity = Vector2.Zero;   
-                // hard reload
-                PlayAnimation("idle", _animationSprite);
+                _isAttacking = false;
+                Velocity = _direction * _speed;
+                PlayAnimation("run", _animationSprite);
             }
         }
+        else
+        {
+            _isAttacking = false;
+            if (distanceToSpawn > _jitterPrevention)
+            {
+                _direction = (_spawnPoint - GlobalPosition).Normalized();
+                Velocity = _direction * _speed;
+                PlayAnimation("run", _animationSprite);
+            }
+            else
+            {
+                GlobalPosition = _spawnPoint;
+                _direction = Vector2.Zero;
+                Velocity = Vector2.Zero;
+                PlayAnimation("idle", _animationSprite);
+                return;
+            }
+        }
+
+        if (_direction.X != 0)
+        {
+            _hitbox.Scale = new Vector2(Mathf.Sign(_direction.X) * Mathf.Abs(_hitbox.Scale.X), _hitbox.Scale.Y);
+            _animationSprite.FlipH = _direction.X < 0;
+        }
         
-        UpdateAnimation(_direction, _animationSprite, false);
         MoveAndSlide();
     }
-
+    
+    private async GDTask HandleAttack()
+    {
+        _isAttacking = true;
+        PlayAnimation("attack", _animationSprite);
+        await GDTask.Delay(TimeSpan.FromSeconds(_attackDelay), DelayType.Realtime);
+        await GDTask.WaitForPhysicsProcess();
+    }
+    
     public void TakeDamage(float damage)
     {
         if (!_isDead) 
             _health.TakeDamage(damage);
     }
 
-    public void UpdateAnimation(Vector2 direction, AnimatedSprite2D sprite, bool isAttacking)
-    {
-        _animations.UpdateAnimation(_direction, _animationSprite, false);
-    }
-
     public void PlayAnimation(string animation, AnimatedSprite2D sprite)
     {
-        _animations.PlayAnimation(animation, sprite);
+        if(sprite.Animation != animation || sprite.Animation == "attack") 
+            sprite.Play(animation);
     }
 }

@@ -992,7 +992,7 @@ position = Vector2(2, 4)
 position = Vector2(173, 335)
 
 [node name="Enemy1" parent="." unique_id=1765082528 instance=ExtResource("17_lh1aq")]
-position = Vector2(316, 123)
+position = Vector2(356, 70)
 
-[node name="Enemy2" parent="." unique_id=1424930550 instance=ExtResource("17_lh1aq")]
-position = Vector2(-122, 117)
+[node name="CharacterBody2D" parent="." unique_id=1485692797 instance=ExtResource("17_lh1aq")]
+position = Vector2(-25, 119)

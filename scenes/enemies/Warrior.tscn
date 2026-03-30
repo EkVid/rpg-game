@@ -263,12 +263,16 @@ height = 68.0
 [sub_resource type="CircleShape2D" id="CircleShape2D_vv6kt"]
 radius = 157.00319
 
+[sub_resource type="CircleShape2D" id="CircleShape2D_1dbmb"]
+radius = 19.0
+
 [node name="CharacterBody2D" type="CharacterBody2D" unique_id=1765082528]
 script = ExtResource("1_y8bsa")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=942180436]
+position = Vector2(-2, -1)
 sprite_frames = SubResource("SpriteFrames_iuane")
-animation = &"run"
+animation = &"idle"
 autoplay = "idle"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=437283131]
@@ -276,6 +280,7 @@ position = Vector2(-2, 8)
 shape = SubResource("CircleShape2D_cndvy")
 
 [node name="HurtBox" type="Area2D" parent="." unique_id=694725077]
+position = Vector2(-1, -2)
 input_pickable = false
 monitoring = false
 
@@ -287,3 +292,27 @@ shape = SubResource("CapsuleShape2D_vv6kt")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="ChaseBox" unique_id=169865448]
 shape = SubResource("CircleShape2D_vv6kt")
+
+[node name="div" type="Node2D" parent="." unique_id=795010120]
+
+[node name="HitBox" type="Area2D" parent="div" unique_id=66820880]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="div/HitBox" unique_id=1745084290]
+position = Vector2(19, -22)
+shape = SubResource("CircleShape2D_1dbmb")
+
+[node name="CollisionShape2D2" type="CollisionShape2D" parent="div/HitBox" unique_id=1022272898]
+position = Vector2(31, 24)
+shape = SubResource("CircleShape2D_1dbmb")
+
+[node name="CollisionShape2D3" type="CollisionShape2D" parent="div/HitBox" unique_id=1336960173]
+position = Vector2(42, -2)
+shape = SubResource("CircleShape2D_1dbmb")
+
+[node name="CollisionShape2D4" type="CollisionShape2D" parent="div/HitBox" unique_id=1455718574]
+position = Vector2(3, 35)
+shape = SubResource("CircleShape2D_1dbmb")
+
+[node name="CollisionShape2D5" type="CollisionShape2D" parent="div/HitBox" unique_id=1713656596]
+position = Vector2(-25, 30)
+shape = SubResource("CircleShape2D_1dbmb")

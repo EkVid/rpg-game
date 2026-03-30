@@ -5,9 +5,10 @@ using GodotTask;
 using tinySwords.scripts;
 using Animation = Godot.Animation;
 
-public partial class Player : CharacterBody2D, IDamagable, IPlayAnimation
+public partial class Player : CharacterBody2D, IDamagable
 {
 	private float _speed = 300f;
+	private float _hitpoints = 300f;
 	private AnimatedSprite2D _animationSprite;
 	private float _attackPower = 50f;
 	private float _attackDelay = 0.5f;
@@ -18,15 +19,24 @@ public partial class Player : CharacterBody2D, IDamagable, IPlayAnimation
 	private Node2D _hitbox;
 	private Area2D _hitboxArea;
 	private readonly Health _health = new Health();
-	private Animations _animation = new Animations();
+	
+	private Camera2D _camera;
+	private Vector2 _spawnPoint;
+	private float _respawnDelay = 10f;
+	private bool _isDead = false;
+	private CollisionShape2D _collisionShape2D;
 
 	public override void _Ready()
 	{
 		base._Ready();
-		_health.Hitpoints = 300f;
+		_health.Hitpoints = _hitpoints;
 		_hitbox = GetNode<Node2D>("div");
 		_hitboxArea = _hitbox.GetNode<Area2D>("HitBox");
 		_animationSprite = GetNode<AnimatedSprite2D>("AnimatedSprite2D");
+		
+		_camera = GetNode<Camera2D>("Camera2D");
+		_collisionShape2D = GetNode<CollisionShape2D>("CollisionShape2D");
+		_spawnPoint = GlobalPosition;
 		
 		_animationSprite.AnimationFinished += () =>
 		{
@@ -36,7 +46,31 @@ public partial class Player : CharacterBody2D, IDamagable, IPlayAnimation
 			}
 		};
 
-		_health.OnDeath += QueueFree;
+		_health.OnDeath += async() =>
+		{
+			_isDead = true;
+			_isAttacking = false;
+			_collisionShape2D.SetDeferred("disabled", true);
+			PlayAnimation("dead", _animationSprite);
+			GD.Print("waiting for dead animation");
+			await ToSignal(_animationSprite, AnimatedSprite2D.SignalName.AnimationFinished);
+			GD.Print("dead animation finished");
+
+			Visible = false;
+			GD.Print("waiting for respawn timer");
+			await ToSignal(GetTree().CreateTimer(_respawnDelay), SceneTreeTimer.SignalName.Timeout);
+			GD.Print("respawning");			
+			GlobalPosition = _spawnPoint;
+			_health.Reset(_hitpoints);
+			_isDead = false;
+			_isAttacking = false;
+			_direction = Vector2.Zero;
+			Velocity = Vector2.Zero;
+			
+			_collisionShape2D.SetDeferred("disabled", false);
+			Visible = true;
+			PlayAnimation("idle", _animationSprite);
+		};
 	}
 
 	public override void _PhysicsProcess(double delta)
@@ -97,11 +131,15 @@ public partial class Player : CharacterBody2D, IDamagable, IPlayAnimation
 
 	public void UpdateAnimation(Vector2 direction, AnimatedSprite2D sprite, bool isAttacking)
 	{
-		_animation.UpdateAnimation(direction, sprite, _isAttacking);
+		if (isAttacking)
+			return;
+		string anima = direction != Vector2.Zero ? "run" : "idle";
+		PlayAnimation(anima, sprite);
 	}
 
 	public void PlayAnimation(string animation, AnimatedSprite2D sprite)
 	{
-		_animation.PlayAnimation(animation, sprite);
+		if(sprite.Animation != animation) 
+			sprite.Play(animation);
 	}
 }
