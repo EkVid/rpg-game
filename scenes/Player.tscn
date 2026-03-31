@@ -265,7 +265,7 @@ script = ExtResource("1_v6fml")
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=443227772]
 position = Vector2(0, -3)
 sprite_frames = SubResource("SpriteFrames_6eyey")
-animation = &"dead"
+animation = &"idle"
 autoplay = "idle"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1491397630]

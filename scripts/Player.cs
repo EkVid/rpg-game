@@ -12,17 +12,17 @@ public partial class Player : CharacterBody2D, IDamagable
 	private AnimatedSprite2D _animationSprite;
 	private float _attackPower = 50f;
 	private float _attackDelay = 0.5f;
-	private Vector2 _direction;
-	private float _x;
-	private float _y;
 	private bool _isAttacking = false;
 	private Node2D _hitbox;
 	private Area2D _hitboxArea;
+	private Vector2 _direction;
+	private float _x;
+	private float _y;
 	private readonly Health _health = new Health();
 	
 	private Camera2D _camera;
 	private Vector2 _spawnPoint;
-	private float _respawnDelay = 10f;
+	private float _respawnDelay = 2f;
 	private bool _isDead = false;
 	private CollisionShape2D _collisionShape2D;
 
@@ -52,20 +52,17 @@ public partial class Player : CharacterBody2D, IDamagable
 			_isAttacking = false;
 			_collisionShape2D.SetDeferred("disabled", true);
 			PlayAnimation("dead", _animationSprite);
-			GD.Print("waiting for dead animation");
 			await ToSignal(_animationSprite, AnimatedSprite2D.SignalName.AnimationFinished);
-			GD.Print("dead animation finished");
 
 			Visible = false;
-			GD.Print("waiting for respawn timer");
 			await ToSignal(GetTree().CreateTimer(_respawnDelay), SceneTreeTimer.SignalName.Timeout);
-			GD.Print("respawning");			
 			GlobalPosition = _spawnPoint;
 			_health.Reset(_hitpoints);
 			_isDead = false;
 			_isAttacking = false;
 			_direction = Vector2.Zero;
 			Velocity = Vector2.Zero;
+			
 			
 			_collisionShape2D.SetDeferred("disabled", false);
 			Visible = true;
@@ -75,7 +72,8 @@ public partial class Player : CharacterBody2D, IDamagable
 
 	public override void _PhysicsProcess(double delta)
 	{
-		HandleAttack().Forget();
+		if (_isDead) return;
+		TryAttack();
 		HandleMovement();
 		HandleFlip();
 		UpdateAnimation(_direction, _animationSprite, _isAttacking);
@@ -108,19 +106,24 @@ public partial class Player : CharacterBody2D, IDamagable
 		}
 	}
 
-	private async GDTask HandleAttack()
+	private void TryAttack()
 	{
 		if (Input.IsActionJustPressed("attack") &&  !_isAttacking)
+		{ 
+			Attack().Forget();
+		}
+	}
+
+	private async GDTask Attack()
+	{
+		_isAttacking = true;
+		PlayAnimation("attack", _animationSprite);
+		await GDTask.Delay(TimeSpan.FromSeconds(_attackDelay), DelayType.Realtime);
+		await GDTask.WaitForPhysicsProcess();
+		foreach (var node in _hitboxArea.GetOverlappingBodies())
 		{
-			_isAttacking = true;
-			PlayAnimation("attack", _animationSprite);
-			await GDTask.Delay(TimeSpan.FromSeconds(_attackDelay), DelayType.Realtime);
-			await GDTask.WaitForPhysicsProcess();
-			foreach (var node in _hitboxArea.GetOverlappingBodies())
-			{
-				if (node != this && node is IDamagable enemyCharacter)
-					enemyCharacter.TakeDamage(_attackPower);
-			}
+			if (node != this && node is IDamagable enemyCharacter)
+				enemyCharacter.TakeDamage(_attackPower);
 		}
 	}
 
@@ -131,7 +134,7 @@ public partial class Player : CharacterBody2D, IDamagable
 
 	public void UpdateAnimation(Vector2 direction, AnimatedSprite2D sprite, bool isAttacking)
 	{
-		if (isAttacking)
+		if (isAttacking || _isDead)
 			return;
 		string anima = direction != Vector2.Zero ? "run" : "idle";
 		PlayAnimation(anima, sprite);
@@ -139,7 +142,9 @@ public partial class Player : CharacterBody2D, IDamagable
 
 	public void PlayAnimation(string animation, AnimatedSprite2D sprite)
 	{
-		if(sprite.Animation != animation) 
+		if (sprite.Animation != animation)
+		{			
 			sprite.Play(animation);
+		}
 	}
 }

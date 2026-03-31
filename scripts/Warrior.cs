@@ -108,7 +108,7 @@ public partial class Warrior : CharacterBody2D, IDamagable
             _isAttacking = false;
             if (distanceToSpawn > _jitterPrevention)
             {
-                _direction = (_spawnPoint - GlobalPosition).Normalized();
+                _direction = GlobalPosition.DirectionTo(_spawnPoint);
                 Velocity = _direction * _speed;
                 PlayAnimation("run", _animationSprite);
             }

@@ -17,6 +17,15 @@ public class Health
         }
     }
 
+    public void Heal(float amount)
+    {
+        Hitpoints += amount;
+        if (Hitpoints >= 100)
+        {
+            Hitpoints = 100;
+        }
+    }
+
     public void Reset(float hitpoints)
     {
         Hitpoints = hitpoints;

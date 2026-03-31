@@ -1,8 +1,66 @@
 [gd_scene format=3 uid="uid://dpdjevdr33mvf"]
 
 [ext_resource type="Texture2D" uid="uid://bnfu5v22xsxu2" path="res://assets/Factions/Knights/Troops/Units/Red Units/Monk/Heal.png" id="1_2yc24"]
+[ext_resource type="Script" uid="uid://danajaos86esc" path="res://scripts/Monk.cs" id="1_tcn28"]
 [ext_resource type="Texture2D" uid="uid://4bpmirgsadsl" path="res://assets/Factions/Knights/Troops/Units/Red Units/Monk/Idle.png" id="2_6bb31"]
+[ext_resource type="Texture2D" uid="uid://ddf5qqmmmt7dq" path="res://assets/Factions/Knights/Troops/Dead/Dead.png" id="2_a7dn5"]
 [ext_resource type="Texture2D" uid="uid://cytq0lf4d5s08" path="res://assets/Factions/Knights/Troops/Units/Red Units/Monk/Run.png" id="3_tcn28"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_x6gvk"]
+atlas = ExtResource("2_a7dn5")
+region = Rect2(0, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_lrh6i"]
+atlas = ExtResource("2_a7dn5")
+region = Rect2(128, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_k8umy"]
+atlas = ExtResource("2_a7dn5")
+region = Rect2(256, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_lo1gl"]
+atlas = ExtResource("2_a7dn5")
+region = Rect2(384, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_wii77"]
+atlas = ExtResource("2_a7dn5")
+region = Rect2(512, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_um1t4"]
+atlas = ExtResource("2_a7dn5")
+region = Rect2(640, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rlnfa"]
+atlas = ExtResource("2_a7dn5")
+region = Rect2(768, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_5wwg4"]
+atlas = ExtResource("2_a7dn5")
+region = Rect2(0, 128, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_jnmfx"]
+atlas = ExtResource("2_a7dn5")
+region = Rect2(128, 128, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_tdgt7"]
+atlas = ExtResource("2_a7dn5")
+region = Rect2(256, 128, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_60hgo"]
+atlas = ExtResource("2_a7dn5")
+region = Rect2(384, 128, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_l2vyh"]
+atlas = ExtResource("2_a7dn5")
+region = Rect2(512, 128, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_sfsn5"]
+atlas = ExtResource("2_a7dn5")
+region = Rect2(640, 128, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_45alw"]
+atlas = ExtResource("2_a7dn5")
+region = Rect2(768, 128, 128, 128)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_a7dn5"]
 atlas = ExtResource("1_2yc24")
@@ -92,6 +150,53 @@ region = Rect2(576, 0, 192, 192)
 animations = [{
 "frames": [{
 "duration": 1.0,
+"texture": SubResource("AtlasTexture_x6gvk")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_lrh6i")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_k8umy")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_lo1gl")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_wii77")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_um1t4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_rlnfa")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_5wwg4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_jnmfx")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_tdgt7")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_60hgo")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_l2vyh")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sfsn5")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_45alw")
+}],
+"loop": false,
+"name": &"dead",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
 "texture": SubResource("AtlasTexture_a7dn5")
 }, {
 "duration": 1.0,
@@ -151,11 +256,6 @@ animations = [{
 "name": &"idle",
 "speed": 10.0
 }, {
-"frames": [],
-"loop": true,
-"name": &"new_animation",
-"speed": 5.0
-}, {
 "frames": [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_lk1ad")
@@ -178,12 +278,13 @@ animations = [{
 radius = 25.019993
 
 [node name="Monk" type="CharacterBody2D" unique_id=37019793]
+script = ExtResource("1_tcn28")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=32909619]
+position = Vector2(-1, -5)
 sprite_frames = SubResource("SpriteFrames_x6gvk")
-animation = &"idle"
+animation = &"dead"
 autoplay = "idle"
-frame_progress = 0.3282481
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=955229193]
 position = Vector2(1, 9)
