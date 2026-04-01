@@ -17,7 +17,6 @@
 [ext_resource type="Texture2D" uid="uid://defh7oba7qdqc" path="res://assets/Resources/Clouds/Clouds_08.png" id="14_j6g5p"]
 [ext_resource type="PackedScene" uid="uid://dpdjevdr33mvf" path="res://scenes/enemies/Monk.tscn" id="16_houy7"]
 [ext_resource type="PackedScene" uid="uid://bigifvcu0xl2x" path="res://scenes/enemies/Warrior.tscn" id="17_lh1aq"]
-[ext_resource type="PackedScene" uid="uid://b5e4bryuo1w4p" path="res://scenes/enemies/Lancer.tscn" id="18_xq5uy"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_quwqd"]
 texture = ExtResource("1_oyojc")
@@ -990,16 +989,10 @@ position = Vector2(190, 180)
 position = Vector2(2, 4)
 
 [node name="Monk" parent="." unique_id=37019793 instance=ExtResource("16_houy7")]
-position = Vector2(173, 335)
+position = Vector2(-165, 221)
 
 [node name="Enemy1" parent="." unique_id=1765082528 instance=ExtResource("17_lh1aq")]
 position = Vector2(830, 153)
 
 [node name="CharacterBody2D" parent="." unique_id=1485692797 instance=ExtResource("17_lh1aq")]
-position = Vector2(-105, 119)
-
-[node name="CharacterBody2D2" parent="." unique_id=2101477719 instance=ExtResource("17_lh1aq")]
-position = Vector2(181, 516)
-
-[node name="Lancer" parent="." unique_id=884489333 instance=ExtResource("18_xq5uy")]
-position = Vector2(-198, 329)
+position = Vector2(-4, 105)

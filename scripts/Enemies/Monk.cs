@@ -1,53 +1,58 @@
-using Godot;
 using System;
+using System.Linq;
+using Godot;
 using GodotTask;
-using tinySwords.scripts;
 
-public partial class Warrior : CharacterBody2D, IDamagable
+namespace tinySwords.scripts;
+
+public partial class Monk: CharacterBody2D, IDamagable
 {
     private readonly Health _health = new Health();
-    
     private AnimatedSprite2D _animationSprite;
+    private AnimatedSprite2D _healAnimation;
     private CollisionShape2D _collisionShape2D;
+    
     private Area2D _chaseBox;
-    private Node2D _hitbox;
-    private Area2D _hitboxArea;
+    private Area2D _healbox;
+    
     
     private float _speed = 100f;
     
     private float _attackPower = 50f;
-    private float _attackDelay = 0.5f;
+    private float _attackDelay = 1f;
     private float _jitterPrevention = 2f;
     private float _attackDistance = 60f;
     
     private bool _isAttacking = false;
-    private bool _playerInRange = false;
     private bool _isDead = false;
     
     private Vector2 _direction = Vector2.Zero;
     private Vector2 _spawnPoint;
     private Player _player;
+    
+    private bool _playerInRange = false;
+    private bool _teamInRange = false;
+    private bool _teamInHealingRange = false;
+
+
     public override void _Ready()
     {
         base._Ready();
         _player = GetNode<Player>("%Player");
         _animationSprite = GetNode<AnimatedSprite2D>("AnimatedSprite2D");
+        _healAnimation = GetNode<AnimatedSprite2D>("HealAnimation");
         _chaseBox = GetNode<Area2D>("ChaseBox");
         _collisionShape2D = GetNode<CollisionShape2D>("CollisionShape2D");
-        _hitbox = GetNode<Node2D>("div");
-        _hitboxArea = _hitbox.GetNode<Area2D>("HitBox");
+        _healbox = GetNode<Area2D>("HealBox");
         _spawnPoint = GlobalPosition;
         
         _animationSprite.AnimationFinished += () =>
         {
             if(_animationSprite.Animation == "attack")
             {
-                foreach (var node in _hitboxArea.GetOverlappingBodies())
-                {
-                    if (node != this && node is IDamagable enemy)
-                        enemy.TakeDamage(_attackPower);
-                }
                 _isAttacking = false;
+                PlayAnimation("idle",  _animationSprite);
+                _healAnimation.Visible = false;
             }
         };
 
@@ -55,14 +60,30 @@ public partial class Warrior : CharacterBody2D, IDamagable
         {
             if (body is Player)
                 _playerInRange = true;
+            else if(body != this && body is IDamagable)
+                _teamInRange = true;
         };
 
         _chaseBox.BodyExited += (Node2D body) =>
         {
             if (body is Player)
                 _playerInRange = false;
+            else if(body!= this && body is IDamagable)
+                _teamInRange = false;
         };
 
+        _healbox.BodyEntered += (Node2D body) =>
+        {
+            if (body != this && body is IDamagable && body is not Player)
+                _teamInHealingRange = true;
+        };
+
+        _healbox.BodyExited += (Node2D body) =>
+        {
+            if (body != this && body is IDamagable && body is not Player)
+                _teamInHealingRange = false;
+        }; 
+        
         _health.OnDeath += async () =>
         {
             _isDead = true;
@@ -72,80 +93,69 @@ public partial class Warrior : CharacterBody2D, IDamagable
             QueueFree();
         };
     }
+    
     public override void _PhysicsProcess(double delta)
     {
         base._PhysicsProcess(delta);
-        float distanceToPlayer = (_player.GlobalPosition - GlobalPosition).Length();
-        float distanceToSpawn = (GlobalPosition - _spawnPoint).Length();
-
+        
         if (_isDead)
         {
             _isAttacking = false;
             return;
         }
         
-        if (_playerInRange && _player != null)
+        if ((_health.Hitpoints < 100 && !_isAttacking) || _teamInHealingRange)
         {
-            _direction = (_player.GlobalPosition - GlobalPosition).Normalized();
-
-            if (distanceToPlayer <= _attackDistance)
-            {
-                Velocity = Vector2.Zero;
-                if (!_isAttacking)
-                {
-                   HandleAttack().Forget();
-                }
-            }
-            else
-            {
-                _isAttacking = false;
-                Velocity = _direction * _speed;
-                PlayAnimation("run", _animationSprite);
-            }
-        }
-        else
-        {
-            _isAttacking = false;
-            if (distanceToSpawn > _jitterPrevention)
-            {
-                _direction = GlobalPosition.DirectionTo(_spawnPoint);
-                Velocity = _direction * _speed;
-                PlayAnimation("run", _animationSprite);
-            }
-            else
-            {
-                GlobalPosition = _spawnPoint;
-                _direction = Vector2.Zero;
-                Velocity = Vector2.Zero;
-                PlayAnimation("idle", _animationSprite);
-                return;
-            }
-        }
-
-        if (_direction.X != 0)
-        {
-            _hitbox.Scale = new Vector2(Mathf.Sign(_direction.X) * Mathf.Abs(_hitbox.Scale.X), _hitbox.Scale.Y);
-            _animationSprite.FlipH = _direction.X < 0;
+            HandleHeal(_attackPower).Forget();
         }
         
-        MoveAndSlide();
+        if (_teamInRange && !_isAttacking)
+        {
+            if (_chaseBox.GetOverlappingBodies().Where(node => node != this && node is IDamagable teammate).MinBy((body) =>
+                    GlobalPosition.DistanceTo(body.GlobalPosition)) is Node2D allyNode2D)
+            {
+                Vector2 direction = GlobalPosition.DirectionTo(allyNode2D.GlobalPosition);
+                Velocity = direction * _speed;
+                MoveAndSlide();
+                PlayAnimation("run", _animationSprite);
+                _healAnimation.Visible = false;
+            }
+        }
+        
+
     }
     
-    private async GDTask HandleAttack()
+    private async GDTask HandleHeal(float heal)
     {
         _isAttacking = true;
         PlayAnimation("attack", _animationSprite);
+        _healAnimation.Visible = true;
+        PlayAnimation("heal", _healAnimation);
         await GDTask.Delay(TimeSpan.FromSeconds(_attackDelay), DelayType.Realtime);
         await GDTask.WaitForPhysicsProcess();
+        Heal(heal);
+        foreach (var node in _chaseBox.GetOverlappingBodies())
+        {
+            if (node != this && node is not Player && node is IDamagable teammate and not Area2D)
+            {
+                teammate.Heal(heal);
+            }
+        }
+        
     }
+
     
     public void TakeDamage(float damage)
     {
-        if (!_isDead) 
-            _health.TakeDamage(damage);
+        _health.TakeDamage(damage);
     }
 
-    public void PlayAnimation(string animation, AnimatedSprite2D sprite)
+    public void Heal(float heal)
+    {
+        _health.Heal(heal);
+    }
+
+    private void PlayAnimation(string animation, AnimatedSprite2D sprite)
     {
         if(sprite.Animation != animation || sprite.Animation == "attack") 
             sprite.Play(animation);

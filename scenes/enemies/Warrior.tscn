@@ -1,10 +1,11 @@
 [gd_scene format=3 uid="uid://bigifvcu0xl2x"]
 
 [ext_resource type="Texture2D" uid="uid://cvxg7e50rad7a" path="res://assets/Factions/Knights/Troops/Units/Red Units/Warrior/Warrior_Idle.png" id="1_op63m"]
-[ext_resource type="Script" uid="uid://c1k88fwcr7dol" path="res://scripts/Warrior.cs" id="1_y8bsa"]
+[ext_resource type="Script" uid="uid://c1k88fwcr7dol" path="res://scripts/Enemies/Warrior.cs" id="1_vv6kt"]
 [ext_resource type="Texture2D" uid="uid://dxqdw58sx80sb" path="res://assets/Factions/Knights/Troops/Units/Red Units/Warrior/Warrior_Run.png" id="2_6jtnp"]
 [ext_resource type="Texture2D" uid="uid://bgovegf5d7ulg" path="res://assets/Factions/Knights/Troops/Units/Red Units/Warrior/Warrior_Attack2.png" id="2_cndvy"]
 [ext_resource type="Texture2D" uid="uid://ddf5qqmmmt7dq" path="res://assets/Factions/Knights/Troops/Dead/Dead.png" id="4_vv6kt"]
+[ext_resource type="Texture2D" uid="uid://snb0chm3dnip" path="res://assets/Factions/Knights/Troops/Units/Red Units/Monk/Heal_Effect.png" id="6_1dbmb"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_7oust"]
 atlas = ExtResource("2_cndvy")
@@ -253,6 +254,91 @@ animations = [{
 "speed": 10.0
 }]
 
+[sub_resource type="AtlasTexture" id="AtlasTexture_75evv"]
+atlas = ExtResource("6_1dbmb")
+region = Rect2(0, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ty3f5"]
+atlas = ExtResource("6_1dbmb")
+region = Rect2(192, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_72xpm"]
+atlas = ExtResource("6_1dbmb")
+region = Rect2(384, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_a6gdu"]
+atlas = ExtResource("6_1dbmb")
+region = Rect2(576, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_qw8wq"]
+atlas = ExtResource("6_1dbmb")
+region = Rect2(768, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_maos1"]
+atlas = ExtResource("6_1dbmb")
+region = Rect2(960, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ecyvb"]
+atlas = ExtResource("6_1dbmb")
+region = Rect2(1152, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_o512d"]
+atlas = ExtResource("6_1dbmb")
+region = Rect2(1344, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_5uv3v"]
+atlas = ExtResource("6_1dbmb")
+region = Rect2(1536, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_18n7d"]
+atlas = ExtResource("6_1dbmb")
+region = Rect2(1728, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ccmy2"]
+atlas = ExtResource("6_1dbmb")
+region = Rect2(1920, 0, 192, 192)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_dxjqb"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_75evv")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ty3f5")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_72xpm")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_a6gdu")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_qw8wq")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_maos1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ecyvb")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_o512d")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_5uv3v")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_18n7d")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ccmy2")
+}],
+"loop": true,
+"name": &"heal",
+"speed": 10.0
+}]
+
 [sub_resource type="CircleShape2D" id="CircleShape2D_cndvy"]
 radius = 24.0
 
@@ -267,13 +353,21 @@ radius = 157.00319
 radius = 19.0
 
 [node name="CharacterBody2D" type="CharacterBody2D" unique_id=1765082528]
-script = ExtResource("1_y8bsa")
+script = ExtResource("1_vv6kt")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=942180436]
 position = Vector2(-2, -1)
 sprite_frames = SubResource("SpriteFrames_iuane")
 animation = &"idle"
 autoplay = "idle"
+
+[node name="HealAnimation" type="AnimatedSprite2D" parent="." unique_id=1756200024]
+visible = false
+sprite_frames = SubResource("SpriteFrames_dxjqb")
+animation = &"heal"
+autoplay = "heal"
+frame = 9
+frame_progress = 0.35109982
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=437283131]
 position = Vector2(-2, 8)

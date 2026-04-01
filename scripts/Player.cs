@@ -132,6 +132,11 @@ public partial class Player : CharacterBody2D, IDamagable
 		_health.TakeDamage(damage);
 	}
 
+	public void Heal(float heal)
+	{
+		_health.Heal(heal);
+	}
+
 	public void UpdateAnimation(Vector2 direction, AnimatedSprite2D sprite, bool isAttacking)
 	{
 		if (isAttacking || _isDead)
@@ -143,8 +148,8 @@ public partial class Player : CharacterBody2D, IDamagable
 	public void PlayAnimation(string animation, AnimatedSprite2D sprite)
 	{
 		if (sprite.Animation != animation)
-		{			
 			sprite.Play(animation);
-		}
 	}
+	
+	
 }
