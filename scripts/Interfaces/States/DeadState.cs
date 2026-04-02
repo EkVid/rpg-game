@@ -11,13 +11,13 @@ public class DeadState: IState
     private readonly AnimatedSprite2D _animatedSprite2D;
     private readonly CollisionShape2D _collisionShape2D;
     private readonly Health _health;
-    private readonly int _hitpoints;
+    private readonly float _hitpoints;
     private readonly float _respawnDelay;
     private readonly Vector2 _spawnPoint;
     private readonly Action _onRespawn;
 
     public DeadState(CharacterBody2D characterBody2D, AnimatedSprite2D animatedSprite2D,
-        CollisionShape2D collisionShape2D, Health health, int hitpoints,
+        CollisionShape2D collisionShape2D, Health health, float hitpoints,
         float respawnDelay, Vector2 spawnPoint, Action onRespawn)
     {
         _characterBody2D = characterBody2D;
@@ -49,9 +49,7 @@ public class DeadState: IState
         _collisionShape2D.SetDeferred("disabled", false);
         _characterBody2D.Visible = true;
         _animatedSprite2D.Play("idle");
-        
-        // callback to notify state machine
-        _onRespawn?.Invoke();
+        _onRespawn?.Invoke(); 
     }
     
 

@@ -1,155 +1,72 @@
 using Godot;
-using System;
-using System.Threading.Tasks;
-using GodotTask;
 using tinySwords.scripts;
-using Animation = Godot.Animation;
+
 
 public partial class Player : CharacterBody2D, IDamagable
 {
-	private float _speed = 300f;
-	private float _hitpoints = 300f;
-	private AnimatedSprite2D _animationSprite;
-	private float _attackPower = 50f;
-	private float _attackDelay = 0.5f;
-	private bool _isAttacking = false;
-	private Node2D _hitbox;
-	private Area2D _hitboxArea;
-	private Vector2 _direction;
-	private float _x;
-	private float _y;
-	private readonly Health _health = new Health();
-	
-	private Camera2D _camera;
-	private Vector2 _spawnPoint;
-	private float _respawnDelay = 2f;
-	private bool _isDead = false;
-	private CollisionShape2D _collisionShape2D;
+    private float _speed = 300f;
+    private float _hitpoints = 300f;
+    private float _attackPower = 50f;
+    private float _attackDelay = 0.5f;
+    private float _respawnDelay = 2f;
 
-	public override void _Ready()
-	{
-		base._Ready();
-		_health.Hitpoints = _hitpoints;
-		_hitbox = GetNode<Node2D>("div");
-		_hitboxArea = _hitbox.GetNode<Area2D>("HitBox");
-		_animationSprite = GetNode<AnimatedSprite2D>("AnimatedSprite2D");
-		
-		_camera = GetNode<Camera2D>("Camera2D");
-		_collisionShape2D = GetNode<CollisionShape2D>("CollisionShape2D");
-		_spawnPoint = GlobalPosition;
-		
-		_animationSprite.AnimationFinished += () =>
-		{
-			if (_animationSprite.Animation == "attack")
-			{
-				_isAttacking = false;
-			}
-		};
+    private AnimatedSprite2D _animationSprite;
+    private Node2D _hitbox;
+    private Area2D _hitboxArea;
+    private CollisionShape2D _collisionShape2D;
+    private Vector2 _spawnPoint;
+    private readonly Health _health = new();
 
-		_health.OnDeath += async() =>
-		{
-			_isDead = true;
-			_isAttacking = false;
-			_collisionShape2D.SetDeferred("disabled", true);
-			PlayAnimation("dead", _animationSprite);
-			await ToSignal(_animationSprite, AnimatedSprite2D.SignalName.AnimationFinished);
+    public StateMachine StateMachine { get; } = new();
 
-			Visible = false;
-			await ToSignal(GetTree().CreateTimer(_respawnDelay), SceneTreeTimer.SignalName.Timeout);
-			GlobalPosition = _spawnPoint;
-			_health.Reset(_hitpoints);
-			_isDead = false;
-			_isAttacking = false;
-			_direction = Vector2.Zero;
-			Velocity = Vector2.Zero;
-			
-			
-			_collisionShape2D.SetDeferred("disabled", false);
-			Visible = true;
-			PlayAnimation("idle", _animationSprite);
-		};
-	}
+    public IState IdleState { get; private set; }
+    public RunState RunState { get; private set; }
+    public AttackState AttackState { get; private set; }
+    public DeadState DeadState { get; private set; }
 
-	public override void _PhysicsProcess(double delta)
-	{
-		if (_isDead) return;
-		TryAttack();
-		HandleMovement();
-		HandleFlip();
-		UpdateAnimation(_direction, _animationSprite, _isAttacking);
-		MoveAndSlide();
-	}
+    public override void _Ready()
+    {
+        base._Ready();
+        _health.Hitpoints = _hitpoints;
 
-	private void HandleMovement()
-	{
-		_x = Input.GetActionStrength("move_right") - Input.GetActionStrength("move_left");
-		_y = Input.GetActionStrength("move_down") - Input.GetActionStrength("move_up");
-		
-		_direction = new Vector2(_x,_y);
+        _hitbox = GetNode<Node2D>("div");
+        _hitboxArea = _hitbox.GetNode<Area2D>("HitBox");
+        _animationSprite = GetNode<AnimatedSprite2D>("AnimatedSprite2D");
+        _collisionShape2D = GetNode<CollisionShape2D>("CollisionShape2D");
+        _spawnPoint = GlobalPosition;
 
-		if (_direction != Vector2.Zero)
-		{
-			Velocity = _direction.Normalized() * _speed;
-		}
-		else
-		{
-			Velocity = Vector2.Zero;
-		}
-	}
+        IdleState = new IdleState(_animationSprite,
+            GetDirection, () => StateMachine.ChangeState(RunState), 
+            () => StateMachine.ChangeState(AttackState));
 
-	private void HandleFlip()
-	{
-		if (_x != 0)
-		{
-			_hitbox.Scale = new Vector2(_x * Mathf.Abs(_hitbox.Scale.X), _hitbox.Scale.Y);
-			_animationSprite.FlipH = _x < 0;
-		}
-	}
+        RunState = new RunState(this, _animationSprite, _speed, _hitbox,
+            GetDirection, () => StateMachine.ChangeState(IdleState), 
+            () => StateMachine.ChangeState(AttackState));
+        
+        AttackState = new AttackState(this, _animationSprite, _attackDelay,
+            _hitboxArea, _attackPower, () => StateMachine.ChangeState(IdleState));
+    
+        DeadState = new DeadState(this, _animationSprite, _collisionShape2D, _health, _hitpoints,
+            _respawnDelay, _spawnPoint, () => StateMachine.ChangeState(IdleState));
 
-	private void TryAttack()
-	{
-		if (Input.IsActionJustPressed("attack") &&  !_isAttacking)
-		{ 
-			Attack().Forget();
-		}
-	}
+        _health.OnDeath += () => StateMachine.ChangeState(DeadState);
 
-	private async GDTask Attack()
-	{
-		_isAttacking = true;
-		PlayAnimation("attack", _animationSprite);
-		await GDTask.Delay(TimeSpan.FromSeconds(_attackDelay), DelayType.Realtime);
-		await GDTask.WaitForPhysicsProcess();
-		foreach (var node in _hitboxArea.GetOverlappingBodies())
-		{
-			if (node != this && node is IDamagable enemyCharacter)
-				enemyCharacter.TakeDamage(_attackPower);
-		}
-	}
+        StateMachine.ChangeState(IdleState);
+    }
 
-	public void TakeDamage(float damage)
-	{
-		_health.TakeDamage(damage);
-	}
+    public override void _PhysicsProcess(double delta)
+    {
+        base._PhysicsProcess(delta);
+        StateMachine.Update(delta);
+    }
 
-	public void Heal(float heal)
-	{
-		_health.Heal(heal);
-	}
+    private static Vector2 GetDirection()
+    {
+        float x = Input.GetActionStrength("move_right") - Input.GetActionStrength("move_left");
+        float y = Input.GetActionStrength("move_down") - Input.GetActionStrength("move_up");
+        return new Vector2(x,y);
+    }
 
-	public void UpdateAnimation(Vector2 direction, AnimatedSprite2D sprite, bool isAttacking)
-	{
-		if (isAttacking || _isDead)
-			return;
-		string anima = direction != Vector2.Zero ? "run" : "idle";
-		PlayAnimation(anima, sprite);
-	}
-
-	public void PlayAnimation(string animation, AnimatedSprite2D sprite)
-	{
-		if (sprite.Animation != animation)
-			sprite.Play(animation);
-	}
-	
-	
+    public void TakeDamage(float damage) => _health.TakeDamage(damage);
+    public void Heal(float heal) => _health.Heal(heal);
 }

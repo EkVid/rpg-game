@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using Godot;
 using GodotTask;
 using tinySwords.scripts;
@@ -30,6 +31,7 @@ public class AttackState : IState
 
     private async GDTask HandleAttackAsync()
     {
+        _animatedSprite2D.AnimationFinished += OnAnimationFinished;
         _animatedSprite2D.Play("attack");
         await GDTask.Delay(TimeSpan.FromSeconds(_attackDelay));
         await GDTask.WaitForPhysicsProcess();
@@ -39,13 +41,17 @@ public class AttackState : IState
             if (node != _characterBody2D && node is IDamagable enemy)
                 enemy.TakeDamage(_attackPower);
         }
-
-        await _animatedSprite2D.ToSignal(_animatedSprite2D, AnimatedSprite2D.SignalName.AnimationFinished);
-        
-        // notify State Machine
-        _onAttackFinished?.Invoke();
     }
 
     public void Update(double delta) { }
-    public void Exit() { }
+
+    public void Exit()
+    {
+    }
+   
+    private void OnAnimationFinished()
+    {
+        _animatedSprite2D.AnimationFinished -= OnAnimationFinished;
+        _onAttackFinished?.Invoke();
+    }
 }
