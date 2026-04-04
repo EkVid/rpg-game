@@ -20,9 +20,9 @@ public partial class Player : CharacterBody2D, IDamagable
     public StateMachine StateMachine { get; } = new();
 
     public IState IdleState { get; private set; }
-    public RunState RunState { get; private set; }
-    public AttackState AttackState { get; private set; }
-    public DeadState DeadState { get; private set; }
+    public IState RunState { get; private set; }
+    public IState AttackState { get; private set; }
+    public IState DeadState { get; private set; }
 
     public override void _Ready()
     {
@@ -68,5 +68,4 @@ public partial class Player : CharacterBody2D, IDamagable
     }
 
     public void TakeDamage(float damage) => _health.TakeDamage(damage);
-    public void Heal(float heal) => _health.Heal(heal);
 }

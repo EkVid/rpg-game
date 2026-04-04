@@ -5,7 +5,7 @@ using GodotTask;
 
 namespace tinySwords.scripts;
 
-public partial class Monk: CharacterBody2D, IDamagable
+public partial class Monk: CharacterBody2D, IHealable
 {
     private readonly Health _health = new Health();
     private AnimatedSprite2D _animationSprite;
@@ -136,19 +136,14 @@ public partial class Monk: CharacterBody2D, IDamagable
         Heal(heal);
         foreach (var node in _chaseBox.GetOverlappingBodies())
         {
-            if (node != this && node is not Player && node is IDamagable teammate and not Area2D)
+            if (node != this && node is not Player && node is IHealable teammate and not Area2D)
             {
                 teammate.Heal(heal);
             }
         }
         
     }
-
     
-    public void TakeDamage(float damage)
-    {
-        _health.TakeDamage(damage);
-    }
 
     public void Heal(float heal)
     {

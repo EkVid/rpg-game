@@ -3,7 +3,7 @@ using System;
 using GodotTask;
 using tinySwords.scripts;
 
-public partial class Warrior : CharacterBody2D, IDamagable
+public partial class Warrior : CharacterBody2D, IDamagable, IHealable
 {
     private readonly Health _health = new Health();
     
@@ -27,6 +27,18 @@ public partial class Warrior : CharacterBody2D, IDamagable
     private Vector2 _direction = Vector2.Zero;
     private Vector2 _spawnPoint;
     private Player _player;
+    
+      
+    public StateMachine StateMachine { get; set; }
+        
+    public IState IdleState { get; private set; }
+    
+    public IState RunState { get; private set; }
+        
+    public IState AttackState  { get; private set; }
+        
+    public IState DeaDState { get; private set; }
+    
     public override void _Ready()
     {
         base._Ready();

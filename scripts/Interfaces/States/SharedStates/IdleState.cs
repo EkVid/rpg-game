@@ -1,7 +1,6 @@
+namespace tinySwords.scripts;
 using System;
 using Godot;
-
-namespace tinySwords.scripts;
 
 public class IdleState: IState
 {
