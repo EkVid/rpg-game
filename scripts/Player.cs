@@ -37,13 +37,13 @@ public partial class Player : CharacterBody2D, IDamagable
         _collisionShape2D = GetNode<CollisionShape2D>("CollisionShape2D");
         _spawnPoint = GlobalPosition;
 
-        IdleState = new IdleState(_animationSprite,
-            GetDirection, _isEnemy, () => StateMachine.ChangeState(RunState), 
+        IdleState = new IdleStatePlayer(_animationSprite,
+            GetDirection, () => StateMachine.ChangeState(RunState), 
             () => StateMachine.ChangeState(AttackState));
 
-        RunState = new RunState(this, _animationSprite, _speed, _hitbox,
+        RunState = new RunStatePlayer(this, _animationSprite, _speed, _hitbox,
             GetDirection, () => StateMachine.ChangeState(IdleState), 
-            () => StateMachine.ChangeState(AttackState), _isEnemy);
+            () => StateMachine.ChangeState(AttackState));
         
         AttackState = new AttackState(this, _animationSprite, _attackDelay,
             _hitboxArea, _attackPower, () => StateMachine.ChangeState(IdleState));

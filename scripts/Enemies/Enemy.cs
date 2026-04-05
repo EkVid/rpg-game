@@ -51,12 +51,12 @@ public partial class Enemy : CharacterBody2D, IDamagable, IHealable
         _hitboxArea = _hitbox.GetNode<Area2D>("HitBox");
         SpawnPoint = GlobalPosition;
         
-        IdleState = new IdleState(_animationSprite, GetDirection, _isEnemy,
-            () => StateMachine.ChangeState(RunState), () => StateMachine.ChangeState(AttackState));
+        IdleState = new IdleStateEnemy(_animationSprite, GetDirection,
+            () => StateMachine.ChangeState(RunState));
         
-        RunState = new RunState(this, _animationSprite, Speed, _hitbox, GetDirection, 
+        RunState = new RunStateEnemy(this, _animationSprite, Speed, _hitbox, GetDirection, 
             () => StateMachine.ChangeState(IdleState), 
-            () => StateMachine.ChangeState(AttackState), _isEnemy);
+            () => StateMachine.ChangeState(AttackState));
 
         AttackState = new AttackState(this, _animationSprite, AttackDelay, _hitboxArea, AttackPower,
             () => StateMachine.ChangeState(IdleState));
