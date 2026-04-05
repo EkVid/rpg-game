@@ -1,46 +1,92 @@
 using Godot;
+using tinySwords.scripts;
+using tinySwords.scripts.States.EnemyStates;
 
-namespace tinySwords.scripts;
-
-public partial class Enemy: CharacterBody2D
+public partial class Enemy : CharacterBody2D, IDamagable, IHealable
 {
-    private readonly Health _health = new Health();
+    private AnimatedSprite2D _animationSprite;
+    private CollisionShape2D _collisionShape2D;
+    private bool _isEnemy = true;
+
+    protected readonly Health Health = new();
+   
+    protected Area2D ChaseBox;
+    protected Vector2 SpawnPoint;
     
-    protected AnimatedSprite2D _animationSprite;
-    protected CollisionShape2D _collisionShape2D;
-    protected Area2D _chaseBox;
+    protected Player Player;
+    protected float Speed = 100f;
+    
+    protected float AttackPower = 50f;
+    protected float AttackDelay = 0.5f;
+    protected float JitterPrevention = 2f;
+    protected float AttackDistance = 60f;
+
+    protected bool IsDead = false;
+    protected bool PlayerInRange = false;
+    
     protected Node2D _hitbox;
     protected Area2D _hitboxArea;
     
-    protected float _speed = 100f;
-    
-    protected float _attackPower = 50f;
-    protected float _attackDelay = 0.5f;
-    protected float _jitterPrevention = 2f;
-    protected float _attackDistance = 60f;
-    
-    protected bool _isAttacking = false;
-    protected bool _playerInRange = false;
-    protected bool _isDead = false;
-    
-    protected Vector2 _direction = Vector2.Zero;
-    protected Vector2 _spawnPoint;
-    protected Player _player;
+    protected Vector2 Direction = Vector2.Zero;
 
+
+    public StateMachine StateMachine { get; set; } = new();
+        
+    public IState IdleState { get; private set; }
+    
+    public IState RunState { get; private set; }
+        
+    public IState AttackState  { get; private set; }
+        
+    public IState DeadStateEnemy { get; private set; }
+    
     public override void _Ready()
     {
         base._Ready();
-        _player = GetNode<Player>("%Player");
+        Player = GetNode<Player>("%Player");
         _animationSprite = GetNode<AnimatedSprite2D>("AnimatedSprite2D");
-        _chaseBox = GetNode<Area2D>("ChaseBox");
+        ChaseBox = GetNode<Area2D>("ChaseBox");
         _collisionShape2D = GetNode<CollisionShape2D>("CollisionShape2D");
         _hitbox = GetNode<Node2D>("div");
         _hitboxArea = _hitbox.GetNode<Area2D>("HitBox");
-        _spawnPoint = GlobalPosition;
+        SpawnPoint = GlobalPosition;
+        
+        IdleState = new IdleState(_animationSprite, GetDirection, _isEnemy,
+            () => StateMachine.ChangeState(RunState), () => StateMachine.ChangeState(AttackState));
+        
+        RunState = new RunState(this, _animationSprite, Speed, _hitbox, GetDirection, 
+            () => StateMachine.ChangeState(IdleState), 
+            () => StateMachine.ChangeState(AttackState), _isEnemy);
+
+        AttackState = new AttackState(this, _animationSprite, AttackDelay, _hitboxArea, AttackPower,
+            () => StateMachine.ChangeState(IdleState));
+
+        DeadStateEnemy = new DeadStateEnemy(this, _animationSprite, _collisionShape2D, _hitboxArea);
+        
+
+        Health.OnDeath += () =>
+        {
+            IsDead = true;
+            StateMachine.ChangeState(DeadStateEnemy);
+        };
+        
+        StateMachine.ChangeState(IdleState);
     }
 
+    public override void _PhysicsProcess(double delta) { }
+
+    private Vector2 GetDirection()
+    {
+        return Direction;
+    }
+    
     public void TakeDamage(float damage)
     {
-        _health.TakeDamage(damage);
+        Health.TakeDamage(damage);
+    }
+
+    public void Heal(float heal)
+    {
+        Health.Heal(heal);
     }
 }
