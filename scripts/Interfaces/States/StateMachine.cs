@@ -2,7 +2,7 @@ namespace tinySwords.scripts;
 
 public class StateMachine
 {
-    private IState _currentState;
+    public IState _currentState { get; private set; }
     
     public void ChangeState(IState newState)
     {

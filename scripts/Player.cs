@@ -1,5 +1,6 @@
 using Godot;
 using tinySwords.scripts;
+using tinySwords.scripts.States.PlayerStates;
 
 
 public partial class Player : CharacterBody2D, IDamagable
@@ -9,6 +10,7 @@ public partial class Player : CharacterBody2D, IDamagable
     private float _attackPower = 50f;
     private float _attackDelay = 0.5f;
     private float _respawnDelay = 2f;
+    private bool _isEnemy = false;
 
     private AnimatedSprite2D _animationSprite;
     private Node2D _hitbox;
@@ -36,17 +38,17 @@ public partial class Player : CharacterBody2D, IDamagable
         _spawnPoint = GlobalPosition;
 
         IdleState = new IdleState(_animationSprite,
-            GetDirection, () => StateMachine.ChangeState(RunState), 
+            GetDirection, _isEnemy, () => StateMachine.ChangeState(RunState), 
             () => StateMachine.ChangeState(AttackState));
 
         RunState = new RunState(this, _animationSprite, _speed, _hitbox,
             GetDirection, () => StateMachine.ChangeState(IdleState), 
-            () => StateMachine.ChangeState(AttackState));
+            () => StateMachine.ChangeState(AttackState), _isEnemy);
         
         AttackState = new AttackState(this, _animationSprite, _attackDelay,
             _hitboxArea, _attackPower, () => StateMachine.ChangeState(IdleState));
     
-        DeadState = new DeadState(this, _animationSprite, _collisionShape2D, _health, _hitpoints,
+        DeadState = new DeadStatePlayer(this, _animationSprite, _collisionShape2D, _health, _hitpoints,
             _respawnDelay, _spawnPoint, () => StateMachine.ChangeState(IdleState));
 
         _health.OnDeath += () => StateMachine.ChangeState(DeadState);
@@ -60,7 +62,7 @@ public partial class Player : CharacterBody2D, IDamagable
         StateMachine.Update(delta);
     }
 
-    private static Vector2 GetDirection()
+    private Vector2 GetDirection()
     {
         float x = Input.GetActionStrength("move_right") - Input.GetActionStrength("move_left");
         float y = Input.GetActionStrength("move_down") - Input.GetActionStrength("move_up");

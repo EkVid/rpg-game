@@ -47,6 +47,7 @@ public class AttackState : IState
 
     public void Exit()
     {
+        _animatedSprite2D.AnimationFinished -= OnAnimationFinished;
     }
    
     private void OnAnimationFinished()

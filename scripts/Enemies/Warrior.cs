@@ -2,10 +2,11 @@ using Godot;
 using System;
 using GodotTask;
 using tinySwords.scripts;
+using tinySwords.scripts.States.EnemyStates;
 
 public partial class Warrior : CharacterBody2D, IDamagable, IHealable
 {
-    private readonly Health _health = new Health();
+    private readonly Health _health = new();
     
     private AnimatedSprite2D _animationSprite;
     private CollisionShape2D _collisionShape2D;
@@ -19,17 +20,17 @@ public partial class Warrior : CharacterBody2D, IDamagable, IHealable
     private float _attackDelay = 0.5f;
     private float _jitterPrevention = 2f;
     private float _attackDistance = 60f;
-    
-    private bool _isAttacking = false;
-    private bool _playerInRange = false;
+
     private bool _isDead = false;
+    private bool _playerInRange = false;
+    private bool isEnemy = true;
     
     private Vector2 _direction = Vector2.Zero;
     private Vector2 _spawnPoint;
     private Player _player;
-    
-      
-    public StateMachine StateMachine { get; set; }
+
+
+    public StateMachine StateMachine { get; set; } = new();
         
     public IState IdleState { get; private set; }
     
@@ -37,7 +38,7 @@ public partial class Warrior : CharacterBody2D, IDamagable, IHealable
         
     public IState AttackState  { get; private set; }
         
-    public IState DeaDState { get; private set; }
+    public IState DeadStateEnemy { get; private set; }
     
     public override void _Ready()
     {
@@ -50,51 +51,45 @@ public partial class Warrior : CharacterBody2D, IDamagable, IHealable
         _hitboxArea = _hitbox.GetNode<Area2D>("HitBox");
         _spawnPoint = GlobalPosition;
         
-        _animationSprite.AnimationFinished += () =>
-        {
-            if(_animationSprite.Animation == "attack")
-            {
-                foreach (var node in _hitboxArea.GetOverlappingBodies())
-                {
-                    if (node != this && node is IDamagable enemy)
-                        enemy.TakeDamage(_attackPower);
-                }
-                _isAttacking = false;
-            }
-        };
+        IdleState = new IdleState(_animationSprite, GetDirection, isEnemy,
+            () => StateMachine.ChangeState(RunState), () => StateMachine.ChangeState(AttackState));
+        
+        RunState = new RunState(this, _animationSprite, _speed, _hitbox, GetDirection, 
+            () => StateMachine.ChangeState(IdleState), 
+            () => StateMachine.ChangeState(AttackState), isEnemy);
 
+        AttackState = new AttackState(this, _animationSprite, _attackDelay, _hitboxArea, _attackPower,
+            () => StateMachine.ChangeState(IdleState));
+
+        DeadStateEnemy = new DeadStateEnemy(this, _animationSprite, _collisionShape2D, _hitboxArea);
+        
         _chaseBox.BodyEntered += (Node2D body) =>
         {
             if (body is Player)
                 _playerInRange = true;
         };
-
+        
         _chaseBox.BodyExited += (Node2D body) =>
         {
             if (body is Player)
                 _playerInRange = false;
         };
 
-        _health.OnDeath += async () =>
+        _health.OnDeath += () =>
         {
             _isDead = true;
-            _collisionShape2D.Disabled = true;
-            PlayAnimation("dead", _animationSprite);
-            await ToSignal(_animationSprite, AnimatedSprite2D.SignalName.AnimationFinished);
-            QueueFree();
+            StateMachine.ChangeState(DeadStateEnemy);
         };
+        
+        StateMachine.ChangeState(IdleState);
     }
     public override void _PhysicsProcess(double delta)
     {
         base._PhysicsProcess(delta);
         float distanceToPlayer = (_player.GlobalPosition - GlobalPosition).Length();
         float distanceToSpawn = (GlobalPosition - _spawnPoint).Length();
-
-        if (_isDead)
-        {
-            _isAttacking = false;
-            return;
-        }
+        
+        if (_isDead) return;
         
         if (_playerInRange && _player != null)
         {
@@ -102,69 +97,51 @@ public partial class Warrior : CharacterBody2D, IDamagable, IHealable
 
             if (distanceToPlayer <= _attackDistance)
             {
-                Velocity = Vector2.Zero;
-                if (!_isAttacking)
-                {
-                   HandleAttack().Forget();
-                }
+                // enter attack state
+                if (StateMachine._currentState != AttackState)
+                    StateMachine.ChangeState(AttackState);
             }
             else
             {
-                _isAttacking = false;
-                Velocity = _direction * _speed;
-                PlayAnimation("run", _animationSprite);
+                // enter run state
+                if (StateMachine._currentState != RunState) 
+                    StateMachine.ChangeState(RunState);
             }
         }
         else
         {
-            _isAttacking = false;
             if (distanceToSpawn > _jitterPrevention)
             {
+                // enter run state
                 _direction = GlobalPosition.DirectionTo(_spawnPoint);
-                Velocity = _direction * _speed;
-                PlayAnimation("run", _animationSprite);
+                if (StateMachine._currentState != RunState)
+                    StateMachine.ChangeState(RunState);
             }
             else
             {
+                // enter idle state
                 GlobalPosition = _spawnPoint;
                 _direction = Vector2.Zero;
-                Velocity = Vector2.Zero;
-                PlayAnimation("idle", _animationSprite);
-                return;
+                if(StateMachine._currentState != IdleState)
+                    StateMachine.ChangeState(IdleState);
             }
         }
-
-        if (_direction.X != 0)
-        {
-            _hitbox.Scale = new Vector2(Mathf.Sign(_direction.X) * Mathf.Abs(_hitbox.Scale.X), _hitbox.Scale.Y);
-            _animationSprite.FlipH = _direction.X < 0;
-        }
         
-        MoveAndSlide();
+        StateMachine.Update(delta);
     }
-    
-    private async GDTask HandleAttack()
+
+    private Vector2 GetDirection()
     {
-        _isAttacking = true;
-        PlayAnimation("attack", _animationSprite);
-        await GDTask.Delay(TimeSpan.FromSeconds(_attackDelay), DelayType.Realtime);
-        await GDTask.WaitForPhysicsProcess();
+        return _direction;
     }
     
     public void TakeDamage(float damage)
     {
-        if (!_isDead) 
-            _health.TakeDamage(damage);
+        _health.TakeDamage(damage);
     }
 
     public void Heal(float heal)
     {
         _health.Heal(heal);
-    }
-
-    public void PlayAnimation(string animation, AnimatedSprite2D sprite)
-    {
-        if(sprite.Animation != animation || sprite.Animation == "attack") 
-            sprite.Play(animation);
     }
 }
