@@ -17,7 +17,7 @@ public partial class Warrior : Enemy
             if (body is Player)
                 PlayerInRange = false;
         };
-
+    
     }
     public override void _PhysicsProcess(double delta)
     {

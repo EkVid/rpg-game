@@ -7,11 +7,12 @@ public class RunStateEnemy: RunState
 {
     public RunStateEnemy(CharacterBody2D character, AnimatedSprite2D sprite, float speed, Node2D hitbox, Func<Vector2> getDirection, Action enterIdle, Action enterAttack) 
         : base(character, sprite, speed, hitbox, getDirection, enterIdle, enterAttack) { }
-
+    
     public override void Update(double delta)
     {
         base.Update(delta);
         Vector2 direction = _getDirection();
+        GD.Print(direction);
 
         if (direction == Vector2.Zero)
         {

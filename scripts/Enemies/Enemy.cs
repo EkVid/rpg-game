@@ -4,11 +4,11 @@ using tinySwords.scripts.States.EnemyStates;
 
 public partial class Enemy : CharacterBody2D, IDamagable, IHealable
 {
-    private AnimatedSprite2D _animationSprite;
-    private CollisionShape2D _collisionShape2D;
-    private bool _isEnemy = true;
+    protected AnimatedSprite2D _animationSprite;
+    protected AnimatedSprite2D _healSprite;
+    protected CollisionShape2D _collisionShape2D;
 
-    protected readonly Health Health = new();
+    public Health Health { get; } = new();
    
     protected Area2D ChaseBox;
     protected Vector2 SpawnPoint;
@@ -38,7 +38,7 @@ public partial class Enemy : CharacterBody2D, IDamagable, IHealable
         
     public IState AttackState  { get; private set; }
         
-    public IState DeadStateEnemy { get; private set; }
+    public IState DeadState { get; private set; }
     
     public override void _Ready()
     {
@@ -49,6 +49,7 @@ public partial class Enemy : CharacterBody2D, IDamagable, IHealable
         _collisionShape2D = GetNode<CollisionShape2D>("CollisionShape2D");
         _hitbox = GetNode<Node2D>("div");
         _hitboxArea = _hitbox.GetNode<Area2D>("HitBox");
+        _healSprite = GetNode<AnimatedSprite2D>("HealAnimation");
         SpawnPoint = GlobalPosition;
         
         IdleState = new IdleStateEnemy(_animationSprite, GetDirection,
@@ -61,13 +62,12 @@ public partial class Enemy : CharacterBody2D, IDamagable, IHealable
         AttackState = new AttackState(this, _animationSprite, AttackDelay, _hitboxArea, AttackPower,
             () => StateMachine.ChangeState(IdleState));
 
-        DeadStateEnemy = new DeadStateEnemy(this, _animationSprite, _collisionShape2D, _hitboxArea);
+        DeadState = new DeadStateEnemy(this, _animationSprite, _collisionShape2D, _hitboxArea);
         
-
         Health.OnDeath += () =>
         {
             IsDead = true;
-            StateMachine.ChangeState(DeadStateEnemy);
+            StateMachine.ChangeState(DeadState);
         };
         
         StateMachine.ChangeState(IdleState);
@@ -75,18 +75,15 @@ public partial class Enemy : CharacterBody2D, IDamagable, IHealable
 
     public override void _PhysicsProcess(double delta) { }
 
-    private Vector2 GetDirection()
-    {
-        return Direction;
-    }
+    protected Vector2 GetDirection() => Direction;
     
-    public void TakeDamage(float damage)
-    {
-        Health.TakeDamage(damage);
-    }
+    public void TakeDamage(float damage) => Health.TakeDamage(damage);
 
     public void Heal(float heal)
     {
+        _healSprite.Play("heal");
         Health.Heal(heal);
     }
+
+    public float GetHealth() => Health.Hitpoints;
 }
