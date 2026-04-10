@@ -12,7 +12,6 @@ public class RunStateEnemy: RunState
     {
         base.Update(delta);
         Vector2 direction = _getDirection();
-        GD.Print(direction);
 
         if (direction == Vector2.Zero)
         {

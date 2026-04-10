@@ -18,16 +18,6 @@ public partial class Monk: Enemy
     
     public override void _Ready()
     {
-        try
-        {
-            base._Ready();
-        }
-        catch (Exception err)
-        {
-            GD.Print(err);
-        }
-        GD.Print(IdleState);
-        
         HealState = new HealState(this, _animationSprite,  _hitboxArea, _amountToHeal, _healDelay, 
             () => StateMachine.ChangeState(IdleState));
 
